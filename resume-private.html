@@ -1,0 +1,270 @@
+<!-- ============================================================
+     PRIVATE / HIDDEN PAGE - RESUME + KEYWORD BANK
+     Standalone, self-contained snippet for its own WordPress page.
+     NOT part of the main scroll; NOT linked from nav or scroll-spy rail.
+     Namespaced under #shar-site, reuses the main site's .sh-* styles.
+     Special punctuation is written as HTML entities so WordPress
+     cannot re-encode it into garbled characters.
+     Keyword bank is collapsed under the resume behind a toggle button.
+
+     TO PUBLISH: open this file in a text editor, select all, copy,
+     and paste into the page-scoped WPCode HTML snippet. Set that
+     WordPress page to Private/Unlisted.
+     ============================================================ -->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+#shar-site{
+  --bg:#0a1426; --bg2:#0c1830; --panel:#101c33; --panel2:#0d1830;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.12);
+  --txt:#e7edf6; --muted:#9fb0c7; --dim:#7e90a8;
+  --accent:#4f8dff; --accent-light:#9ec3ff; --accent-soft:rgba(79,141,255,.12);
+  --accent-line:rgba(79,141,255,.45); --gold:#e0b341; --gold-soft:rgba(224,179,65,.12);
+  position:relative; color:var(--txt); line-height:1.6;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  /* full-bleed: break out of the theme content column */
+  width:100vw; max-width:100vw; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw;
+  overflow-x:hidden;
+}
+#shar-site *{margin:0; padding:0; box-sizing:border-box;}
+#shar-site a{text-decoration:none; color:inherit;}
+#shar-site img{max-width:100%;}
+#shar-site ::selection{background:rgba(79,141,255,.32);}
+
+/* ---------- layout ---------- */
+#shar-site .sh-section{position:relative; z-index:1; padding:clamp(64px,9vw,118px) clamp(20px,6vw,40px); scroll-margin-top:70px;}
+#shar-site .sh-wrap{max-width:1120px; margin:0 auto;}
+
+/* ---------- type ---------- */
+#shar-site .sh-eyebrow{display:inline-block; font-size:12.5px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:14px;}
+#shar-site .sh-h2{font-family:'Playfair Display',serif; font-weight:800; font-size:clamp(30px,4.4vw,46px); line-height:1.08; color:var(--txt); letter-spacing:-.01em;}
+#shar-site .sh-lead{color:var(--muted); font-size:clamp(16px,1.7vw,18px); line-height:1.7; max-width:680px; margin-top:18px;}
+#shar-site .sh-proj-text{color:var(--muted); font-size:15.8px; line-height:1.7; margin-bottom:12px;}
+
+/* ---------- resume cards ---------- */
+#shar-site .sh-resume-card{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:28px;}
+#shar-site .sh-resume-card.sh-span{grid-column:1 / -1;}
+#shar-site .sh-resume-card + .sh-resume-card{margin-top:20px;} /* stacking gap (no grid wrapper on this page) */
+#shar-site .sh-resume-card h3{font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--txt); margin-bottom:6px;}
+#shar-site .sh-resume-card .sh-kix{font-size:11.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; display:block;}
+#shar-site .sh-edu-line{color:var(--muted); font-size:15px; line-height:1.8;}
+#shar-site .sh-edu-line b{color:var(--txt); font-weight:700;}
+#shar-site .sh-pills{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+#shar-site .sh-pill{background:var(--panel2); border:1px solid var(--line2); color:#c7d4e8; border-radius:999px; padding:6px 13px; font-size:13px; font-weight:600;}
+#shar-site .sh-skill-group{margin-bottom:18px;}
+#shar-site .sh-skill-group:last-child{margin-bottom:0;}
+#shar-site .sh-skill-group h4{font-size:13px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-light); margin-bottom:10px;}
+#shar-site .sh-exp{display:flex; gap:16px; padding:18px 0; border-top:1px solid var(--line);}
+#shar-site .sh-exp:first-of-type{border-top:0; padding-top:4px;}
+#shar-site .sh-exp-role{flex:1;}
+#shar-site .sh-exp-role b{display:block; color:var(--txt); font-size:16px; font-weight:700; margin-bottom:3px;}
+#shar-site .sh-exp-role .sh-org{color:var(--accent-light); font-size:14px; font-weight:600;}
+#shar-site .sh-exp-role p{color:var(--muted); font-size:14px; line-height:1.65; margin-top:6px;}
+
+/* ---------- buttons (reused from main site) ---------- */
+#shar-site .sh-btn{display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:15px; padding:14px 26px; border-radius:10px; transition:transform .25s, box-shadow .25s, background .25s, border-color .25s; cursor:pointer;}
+#shar-site .sh-btn-primary{background:var(--accent); color:#08111f; box-shadow:0 10px 26px rgba(79,141,255,.32);}
+#shar-site .sh-btn-primary:hover{transform:translateY(-3px); box-shadow:0 16px 34px rgba(79,141,255,.42);}
+
+/* ---------- keyword bank: collapsed toggle under the resume ---------- */
+#shar-site .sh-kw{margin-top:40px;}
+#shar-site .sh-kw-btn{list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:10px; background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--accent-light); border-radius:999px; padding:12px 22px; font-size:14px; font-weight:700; letter-spacing:.02em; transition:background .2s ease, border-color .2s ease;}
+#shar-site .sh-kw-btn::-webkit-details-marker{display:none;}
+#shar-site .sh-kw-btn:hover{background:rgba(79,141,255,.18); border-color:var(--accent);}
+#shar-site .sh-kw-btn svg{width:14px; height:14px; transition:transform .25s ease;}
+#shar-site .sh-kw[open] .sh-kw-btn svg{transform:rotate(180deg);}
+#shar-site .sh-kw-body{margin-top:24px;}
+#shar-site .sh-kw-body .sh-resume-card:first-child{margin-top:0;}
+
+/* ---------- scroll reveal (mirrors main site; content still shows if JS fails) ---------- */
+#shar-site .sh-reveal{opacity:1; transform:none;}
+#shar-site.sh-js-ready .sh-reveal:not(.sh-in){opacity:0; transform:translateY(32px);}
+#shar-site.sh-js-ready .sh-reveal.sh-in{opacity:1; transform:translateY(0); transition:opacity .75s cubic-bezier(.2,.7,.2,1), transform .75s cubic-bezier(.2,.7,.2,1);}
+</style>
+
+<div id="shar-site">
+
+  <section class="sh-section" id="private-resume">
+    <div class="sh-wrap">
+
+      <!-- ---------- RESUME ---------- -->
+      <div class="sh-reveal">
+        <span class="sh-eyebrow">Credentials</span>
+        <h2 class="sh-h2">Resume</h2>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal" style="margin-top:32px;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:24px;color:var(--txt);margin-bottom:4px;">Sharaheel Ali</h3>
+        <p class="sh-edu-line" style="margin-bottom:6px;">Chicago, IL &middot; sharaheelali@gmail.com &middot;
+          <a href="https://linkedin.com/in/sharaheelali" style="color:var(--accent-light);">linkedin.com/in/sharaheelali</a> &middot;
+          <a href="https://github.com/shar-ali1" style="color:var(--accent-light);">github.com/shar-ali1</a> &middot;
+          <a href="https://sharali.blog" style="color:var(--accent-light);">sharali.blog</a>
+        </p>
+        <p class="sh-proj-text" style="margin:0;">Computer Science student (B.S. 2029) building reliability-first AI systems; targeting an AI engineering internship for Summer 2027.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">Education</span>
+        <p class="sh-edu-line"><b>University of Illinois Chicago, College of Engineering</b> &mdash; Chicago, IL <span style="opacity:.7;">(Expected May 2029)</span></p>
+        <p class="sh-edu-line">B.S. in Computer Science &middot; GPA 3.76 &middot; Dean&rsquo;s List</p>
+        <p class="sh-proj-text">Relevant coursework: Program Design I&ndash;II, Calculus I&ndash;III, Computer Organization, Applied Linear Algebra (Fall 2026), Applied Statistical Methods (Fall 2026)</p>
+        <p class="sh-proj-text" style="margin:0;">Built <em>Mate in 10!</em>, an interactive chess-tactics teaching game in Python (Turtle) as the CS 111 final project, earning an exemplary grade for game logic, UI design, and user flow.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">Projects</span>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>Timely AI &mdash; Agentic Scheduling Assistant</b>
+            <span class="sh-org">Jun 2025 &ndash; Present</span>
+            <p>Designed and built an agentic scheduling assistant (React + Flask) that converts natural language into validated Google Calendar actions across five intent types, using a deterministic validation layer and confirm-before-write flow; built a 42-case eval harness across 13 categories that caught a cancel-intent failure at 33%, reworked intent handling to reach 100% on that category, and now scores 98% overall (41/42).</p>
+          </div>
+        </div>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>sharali.blog &mdash; Portfolio Site</b>
+            <span class="sh-org">Jun 2026 &ndash; Present</span>
+            <p>Designed and built a single-page portfolio on WordPress (Assembler FSE theme + custom HTML/CSS/JS via WPCode), scoping all styles under a #shar-site ID with .sh-* class prefixes to prevent collisions with the theme, plus scroll-spy navigation and Open Graph link previews, to present five projects on one recruiter-facing page.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">Leadership &amp; Activities</span>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>AI Leaders, Cohort I &mdash; Finalist</b>
+            <span class="sh-org">2026</span>
+            <p>Selected as a Top 40 finalist among ~500 participants (program partnered with the WordPress Foundation, Automattic, and UIC); produced five documented AI-ethics and career-readiness artifacts and contributed product feedback on AI-assisted WordPress workflows.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">Skills</span>
+        <div class="sh-skill-group">
+          <h4>Languages</h4>
+          <div class="sh-pills"><span class="sh-pill">Python</span><span class="sh-pill">JavaScript</span><span class="sh-pill">SQL</span><span class="sh-pill">HTML / CSS</span></div>
+        </div>
+        <div class="sh-skill-group">
+          <h4>Frameworks &amp; Tools</h4>
+          <div class="sh-pills"><span class="sh-pill">React</span><span class="sh-pill">Flask</span><span class="sh-pill">Electron</span><span class="sh-pill">REST APIs</span><span class="sh-pill">Google Calendar API / OAuth</span><span class="sh-pill">Git &amp; GitHub</span><span class="sh-pill">WordPress</span><span class="sh-pill">VS Code</span></div>
+        </div>
+        <div class="sh-skill-group">
+          <h4>Concepts</h4>
+          <div class="sh-pills"><span class="sh-pill">Agentic tool-calling</span><span class="sh-pill">Eval-harness design</span><span class="sh-pill">Deterministic validation</span><span class="sh-pill">Responsible AI workflows</span></div>
+        </div>
+      </div>
+
+      <!-- ---------- KEYWORD BANK (collapsed toggle, private) ---------- -->
+      <details class="sh-kw sh-span sh-reveal">
+        <summary class="sh-kw-btn">
+          <span>View keyword bank &middot; private</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+
+        <div class="sh-kw-body">
+          <div style="margin-bottom:24px;">
+            <span class="sh-eyebrow">Filtering lens &middot; private</span>
+            <p class="sh-lead" style="margin-top:8px;">Ranked skills and tools extracted from five target AI/ML engineering internship postings (Chicago + remote, sourced via Indeed), sorted by how many of the five required each. Used to filter applications and spot skill gaps.</p>
+          </div>
+
+          <div class="sh-resume-card sh-span">
+            <p class="sh-proj-text" style="margin-bottom:4px;"><strong style="color:#c7d4e8;">The 5 postings:</strong> Diagonal Matrix (AI/GenAI/LLM Engineer Intern) &middot; Cotiviti (AI Engineer Intern) &middot; Navisoft (AI/ML Dev Intern) &middot; TransUnion (ML Platform Engineer) &middot; Marketeq (AI Product Engineer Intern).</p>
+            <p class="sh-proj-text" style="margin:0;opacity:.8;">Note: 3 of 5 require/prefer a master&rsquo;s and 1 prefers a PhD &mdash; read as a signal these postings skew senior, not a skill gap, so degree level is not ranked as a keyword.</p>
+          </div>
+
+          <div class="sh-resume-card sh-span">
+            <div class="sh-skill-group">
+              <h4>Tier 1 &mdash; core (4&ndash;5 of 5)</h4>
+              <div class="sh-pills">
+                <span class="sh-pill">Python &middot; 5</span><span class="sh-pill">LLM APIs (OpenAI/Azure/Anthropic) &middot; 5</span><span class="sh-pill">Cross-functional collaboration &middot; 5</span><span class="sh-pill">RAG &middot; 4</span><span class="sh-pill">Prompt engineering &middot; 4</span><span class="sh-pill">Vector DBs / embeddings &middot; 4</span><span class="sh-pill">Cloud (AWS/Azure/Vertex) &middot; 4</span><span class="sh-pill">Evaluating AI outputs &middot; 4</span>
+              </div>
+            </div>
+            <div class="sh-skill-group">
+              <h4>Tier 2 &mdash; recurring (2&ndash;3 of 5)</h4>
+              <div class="sh-pills">
+                <span class="sh-pill">Agentic AI workflows &middot; 3</span><span class="sh-pill">LangChain / LlamaIndex &middot; 3</span><span class="sh-pill">SQL &middot; 3</span><span class="sh-pill">Data pipelines / ETL &middot; 3</span><span class="sh-pill">Generative AI app dev &middot; 3</span><span class="sh-pill">Git &amp; code review &middot; 2</span><span class="sh-pill">Reviewing AI-generated code &middot; 2</span><span class="sh-pill">Documenting workflows &middot; 2</span>
+              </div>
+            </div>
+            <div class="sh-skill-group">
+              <h4>Tier 3 &mdash; present (1 of 5)</h4>
+              <div class="sh-pills">
+                <span class="sh-pill">NLP</span><span class="sh-pill">TensorFlow</span><span class="sh-pill">MLflow / Ray / Slurm</span><span class="sh-pill">Fine-tuning</span><span class="sh-pill">MCP architectures</span><span class="sh-pill">Streamlit / Dash</span><span class="sh-pill">Claude Code / CLI</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sh-resume-card sh-span" style="border-left:4px solid var(--accent);">
+            <span class="sh-kix">Gaps by leverage</span>
+            <p class="sh-proj-text" style="margin:0;"><strong style="color:#c7d4e8;">(1) RAG + vector DBs / embeddings</strong> &mdash; highest priority; appears in 4 of 5 and is adjacent to Timely but not yet demonstrated. <strong style="color:#c7d4e8;">(2) Cloud (AWS / Azure).</strong> <strong style="color:#c7d4e8;">(3) An orchestration framework</strong> (LangChain / LlamaIndex).</p>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <section class="sh-section" id="screening-methodology">
+    <div class="sh-wrap">
+
+      <!-- ---------- SCREENING METHODOLOGY ---------- -->
+      <div class="sh-reveal">
+        <span class="sh-eyebrow">Methodology</span>
+        <h2 class="sh-h2">How I screen roles &mdash; a verification-first job filter</h2>
+        <p class="sh-lead" style="margin-top:8px;">I built Timely AI on one idea &mdash; the AI proposes, a human verifies before anything counts. When I started looking for a Summer 2027 AI engineering internship, I pointed the same method at the search itself: instead of applying to everything with &ldquo;AI&rdquo; in the title, I built a screen.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal" style="margin-top:32px;">
+        <span class="sh-kix">The three non-negotiables</span>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>Verification culture</b>
+            <span class="sh-org">01</span>
+            <p>Does the role or company measure correctness (evals, testing, reliability), or just assume it?</p>
+          </div>
+        </div>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>Production stakes</b>
+            <span class="sh-org">02</span>
+            <p>Does it ship to real users and real data, not sandbox demos?</p>
+          </div>
+        </div>
+        <div class="sh-exp">
+          <div class="sh-exp-role">
+            <b>AI as core, on consequential actions</b>
+            <span class="sh-org">03</span>
+            <p>Is AI the product itself, and does a wrong output carry real cost (a wrong clinical read, a bad calendar write), not just a softer metric miss?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">A pre-filter before the three</span>
+        <p class="sh-proj-text" style="margin:0;">Those three screen for fit, not for whether I can actually apply. A level / eligibility / timeline / credibility gate runs first, so a perfect-fit role that quietly requires a completed master&rsquo;s or ten years of experience doesn&rsquo;t waste screening effort.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">What the system caught</span>
+        <p class="sh-proj-text"><strong style="color:#c7d4e8;">A role that passed all three non-negotiables but required a completed master&rsquo;s</strong> &mdash; caught by the eligibility gate.</p>
+        <p class="sh-proj-text" style="margin:0;"><strong style="color:#c7d4e8;">A posting with real AI work but an impossible listing</strong> (a salary contradicted by an unpaid-intern question and a &ldquo;GPA above 4.5&rdquo; requirement) &mdash; caught by the credibility gate.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">The refinement</span>
+        <p class="sh-proj-text" style="margin:0;">The most useful failure wasn&rsquo;t in the screening &mdash; it was in my criteria. A marketing-automation role built genuinely with LLMs passed &ldquo;AI as core,&rdquo; but it wasn&rsquo;t the work I meant. So I tightened the third non-negotiable to add a stakes clause: AI as core AND the AI takes consequential actions on real data. The criterion grew because a boundary case forced it &mdash; the same way my Timely AI eval harness improved when a cancel-intent case failed at 33% and I reworked it to 100%.</p>
+      </div>
+
+      <div class="sh-resume-card sh-span sh-reveal">
+        <span class="sh-kix">Screening log</span>
+        <p class="sh-proj-text">The full screening log &mdash; every posting, verdict, and documented false pass &mdash; lives in a working sheet, updated in rolling waves as the 2027 cycle opens.</p>
+        <a class="sh-btn sh-btn-primary" href="https://docs.google.com/spreadsheets/d/1Lm4syZag-CTYNfUgYLJnDvHxuWU2aSrU/edit?usp=sharing" target="_blank" rel="noopener" style="margin-top:8px;">View the screening log &rarr;</a>
+      </div>
+
+    </div>
+  </section>
+
+</div>
