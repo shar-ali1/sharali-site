@@ -14,6 +14,20 @@
     root.classList.add('sh-js-ready');
 var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---------- single rAF-throttled scroll dispatcher ----------
+     one listener, at most one layout pass per frame — replaces the
+     six independent scroll listeners that each forced layout reads */
+  var shScrollFns = [], shScrollQueued = false;
+  function shOnScroll(fn){ shScrollFns.push(fn); }
+  window.addEventListener('scroll', function(){
+    if(shScrollQueued) return;
+    shScrollQueued = true;
+    requestAnimationFrame(function(){
+      shScrollQueued = false;
+      for(var i=0;i<shScrollFns.length;i++) shScrollFns[i]();
+    });
+  }, {passive:true});
+
   /* ---------- rotating hero words ---------- */
   var SH_WORDS = ['AI Engineer in Training','Agentic Systems Builder','Eval-Driven Developer','CS Student @ UIC','Problem Solver'];
   var wordEl = root.querySelector('.sh-word'), wi = 0;
@@ -45,7 +59,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
   /* ---------- sticky nav shadow ---------- */
   function onScrollNav(){ if(nav) nav.classList.toggle('sh-scrolled', window.pageYOffset > 12); }
   onScrollNav();
-  window.addEventListener('scroll', onScrollNav, {passive:true});
+  shOnScroll(onScrollNav);
 
   /* ---------- mobile menu ---------- */
   var burger = document.getElementById('sh-burger'), mobile = document.getElementById('sh-mobile');
@@ -73,7 +87,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
   }
   revealCheck();
-  window.addEventListener('scroll', revealCheck, {passive:true});
+  shOnScroll(revealCheck);
   window.addEventListener('resize', revealCheck);
 
   /* ---------- active-section highlighting ---------- */
@@ -93,7 +107,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     sections.forEach(function(s){ if(s) so.observe(s); });
     /* bottom-of-page fallback: the final (short) section can't reach the
        observer band, so force its nav link active when scrolled to the end */
-    window.addEventListener('scroll', function(){
+    shOnScroll(function(){
       var docH = document.documentElement.scrollHeight;
       if(window.innerHeight + window.pageYOffset >= docH - 2){
         var last = sections[sections.length - 1];
@@ -102,12 +116,12 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
           var l = map['#'+last.id]; if(l) l.classList.add('sh-active');
         }
       }
-    }, {passive:true});
+    });
   }
 
   /* ---------- hero: scroll cue fade ---------- */
   var cue = root.querySelector('.sh-cue');
-  if(cue) window.addEventListener('scroll', function(){ cue.style.opacity = Math.max(0, 1 - window.scrollY/260).toFixed(2); }, {passive:true});
+  if(cue) shOnScroll(function(){ cue.style.opacity = Math.max(0, 1 - window.scrollY/260).toFixed(2); });
 
   /* ---------- persistent scroll indicator (shows past hero, hides at bottom) ---------- */
   var scrollcue = document.getElementById('sh-scrollcue');
@@ -120,7 +134,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       scrollcue.classList.toggle('sh-cue-show', pastHero && !nearBottom);
     }
     cueUpdate();
-    window.addEventListener('scroll', cueUpdate, {passive:true});
+    shOnScroll(cueUpdate);
     window.addEventListener('resize', cueUpdate);
   }
 
@@ -140,9 +154,9 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
   var starRoot = root.querySelector('.sh-bg'), layers = [];
   if(starRoot){
     var defs = [
-      {strength:10,count:220,smin:0.7,smax:1.6,omin:0.30,omax:0.65,fmin:26,fmax:44},
-      {strength:22,count:150,smin:1.1,smax:2.2,omin:0.48,omax:0.85,fmin:18,fmax:30},
-      {strength:40,count:82,smin:1.7,smax:3.2,omin:0.68,omax:1.00,fmin:12,fmax:20}
+      {strength:10,count:110,smin:0.7,smax:1.6,omin:0.30,omax:0.65,fmin:26,fmax:44},
+      {strength:22,count:75,smin:1.1,smax:2.2,omin:0.48,omax:0.85,fmin:18,fmax:30},
+      {strength:40,count:45,smin:1.7,smax:3.2,omin:0.68,omax:1.00,fmin:12,fmax:20}
     ];
     for(var d=0; d<defs.length; d++){
       var L = defs[d], layer = document.createElement('div'); layer.className='sh-layer'; var html='';
@@ -160,24 +174,15 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
   }
 
-  /* ---------- white cursor ribbon + aurora + gentle star parallax ---------- */
-  /* ambient starfield always runs; ribbon and aurora are skipped under reduced motion */
+  /* ---------- white cursor ribbon + gentle star parallax ---------- */
+  /* (aurora fog removed — the headshot glow is the hero's only ambient light;
+     the full-screen blur(26px) canvas it used was also the site's biggest GPU cost) */
   var oldGlow = root.querySelector('.sh-bg-glow');
   if(oldGlow && oldGlow.parentNode) oldGlow.parentNode.removeChild(oldGlow); /* legacy glow div, if the old HTML is still live */
-  var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 600, TRAIL_DPR = 1;
-  var aurCv = null, aurCtx = null;
-  var AUR_BANDS = [
-    {rgb:'79,209,197',  yb:0.16, th:150, amp:52, sp:0.000050, off:0.0, a:0.16},
-    {rgb:'79,141,255',  yb:0.30, th:180, amp:70, sp:0.000034, off:2.1, a:0.13},
-    {rgb:'150,120,230', yb:0.10, th:120, amp:44, sp:0.000064, off:4.4, a:0.10}
-  ];
+  var oldAur = root.querySelector('.sh-aurora');
+  if(oldAur && oldAur.parentNode) oldAur.parentNode.removeChild(oldAur); /* legacy aurora canvas, if cached HTML still has one */
+  var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 380, TRAIL_DPR = 1;
   if(!reduce && starRoot){
-    /* aurora canvas sits BEHIND the star layers */
-    aurCv = document.createElement('canvas');
-    aurCv.className = 'sh-aurora';
-    aurCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:blur(26px);';
-    starRoot.insertBefore(aurCv, starRoot.firstChild);
-    aurCtx = aurCv.getContext('2d');
     /* ribbon canvas sits ON TOP of the star layers */
     trailCv = document.createElement('canvas');
     trailCv.className = 'sh-trail';
@@ -188,34 +193,9 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       TRAIL_DPR = Math.min(window.devicePixelRatio || 1, 2);
       trailCv.width = Math.round(window.innerWidth * TRAIL_DPR);
       trailCv.height = Math.round(window.innerHeight * TRAIL_DPR);
-      aurCv.width = window.innerWidth;   /* blurred anyway — 1x is enough */
-      aurCv.height = window.innerHeight;
     };
     fxSize();
     window.addEventListener('resize', fxSize);
-  }
-  function drawAurora(now){
-    var w = aurCv.width, h = aurCv.height;
-    aurCtx.clearRect(0, 0, w, h);
-    for(var b=0; b<AUR_BANDS.length; b++){
-      var B = AUR_BANDS[b], steps = 22, top = [], y0 = h*B.yb;
-      for(var i=0;i<=steps;i++){
-        var x = w*i/steps;
-        top.push(y0 + Math.sin(x*0.0045 + now*B.sp + B.off)*B.amp
-                    + Math.sin(x*0.011 - now*B.sp*1.6 + B.off)*B.amp*0.45);
-      }
-      var yMin = Math.min.apply(null, top);
-      var g = aurCtx.createLinearGradient(0, yMin, 0, yMin + B.th*1.7);
-      g.addColorStop(0, 'rgba('+B.rgb+','+B.a+')');
-      g.addColorStop(1, 'rgba('+B.rgb+',0)');
-      aurCtx.fillStyle = g;
-      aurCtx.beginPath();
-      aurCtx.moveTo(0, top[0]);
-      for(var j=1;j<=steps;j++) aurCtx.lineTo(w*j/steps, top[j]);
-      for(var k=steps;k>=0;k--) aurCtx.lineTo(w*k/steps, top[k] + B.th + Math.sin(w*k/steps*0.006 + now*B.sp*1.3)*B.amp*0.3);
-      aurCtx.closePath();
-      aurCtx.fill();
-    }
   }
   {
     var t = {px:0,py:0}, c = {px:0,py:0};
@@ -223,35 +203,40 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       t.px = (e.clientX/window.innerWidth - .5)*2; t.py = (e.clientY/window.innerHeight - .5)*2;
       if(trailCtx){
         var last = trailPts[trailPts.length-1];
-        if(!last || Math.abs(e.clientX-last.x) + Math.abs(e.clientY-last.y) > 2){
+        if(!last || Math.abs(e.clientX-last.x) + Math.abs(e.clientY-last.y) > 1){
           trailPts.push({x:e.clientX, y:e.clientY, t:performance.now()});
-          if(trailPts.length > 60) trailPts.shift();
+          if(trailPts.length > 48) trailPts.shift();
         }
       }
     }, {passive:true});
+    var trailWasDrawn = false;
     (function tick(){
       var now = performance.now();
-      /* aurora: slow drifting ribbons behind the stars */
-      if(aurCtx) drawAurora(now);
-      /* ribbon: smooth white curve through recent cursor points; fades out at rest */
+      /* ribbon: smooth white curve through recent cursor points; fades out at rest.
+         no canvas shadowBlur — shadows are the slowest 2D-canvas op and were
+         being paid on every segment, every frame. */
       if(trailCtx){
         while(trailPts.length && now - trailPts[0].t > TRAIL_LIFE) trailPts.shift();
-        trailCtx.setTransform(TRAIL_DPR, 0, 0, TRAIL_DPR, 0, 0);
-        trailCtx.clearRect(0, 0, trailCv.width, trailCv.height);
         if(trailPts.length > 2){
+          trailCtx.setTransform(TRAIL_DPR, 0, 0, TRAIL_DPR, 0, 0);
+          trailCtx.clearRect(0, 0, trailCv.width, trailCv.height);
           trailCtx.lineCap = 'round'; trailCtx.lineJoin = 'round';
-          trailCtx.shadowColor = 'rgba(255,255,255,.55)'; trailCtx.shadowBlur = 5;
           for(var p=1; p<trailPts.length-1; p++){
             var p0 = trailPts[p-1], p1 = trailPts[p], p2 = trailPts[p+1];
             var f = 1 - Math.min(1, (now - p1.t)/TRAIL_LIFE);       /* 1 fresh -> 0 gone */
-            trailCtx.strokeStyle = 'rgba(255,255,255,' + (0.5*f).toFixed(3) + ')';
+            trailCtx.strokeStyle = 'rgba(255,255,255,' + (0.65*f).toFixed(3) + ')';
             trailCtx.lineWidth = Math.max(0.3, 3.2*f);
             trailCtx.beginPath();
             trailCtx.moveTo((p0.x+p1.x)/2, (p0.y+p1.y)/2);
             trailCtx.quadraticCurveTo(p1.x, p1.y, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
             trailCtx.stroke();
           }
-          trailCtx.shadowBlur = 0;
+          trailWasDrawn = true;
+        } else if(trailWasDrawn){
+          /* one final clear once the ribbon has fully faded, then idle for free */
+          trailCtx.setTransform(TRAIL_DPR, 0, 0, TRAIL_DPR, 0, 0);
+          trailCtx.clearRect(0, 0, trailCv.width, trailCv.height);
+          trailWasDrawn = false;
         }
       }
       /* stars: gentle mouse + scroll parallax (fall animation runs independently) */
@@ -291,6 +276,14 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       return { item:it, id:id, el:root.querySelector('#'+id) };
     }).filter(function(a){ return a.el; });
     var subWrap = document.getElementById('sh-rail-sub');
+    /* cache section offsets — measuring them per scroll event forced a
+       full layout pass for every anchor on every frame */
+    var railTops = [];
+    function railMeasure(){
+      railTops = anchors.map(function(a){ return a.el.getBoundingClientRect().top + window.pageYOffset; });
+    }
+    railMeasure();
+    window.addEventListener('load', railMeasure);
     function railUpdate(){
       /* show the rail only once the top nav has scrolled out of view */
       var navGone = nav ? nav.getBoundingClientRect().bottom < 0 : window.pageYOffset > 120;
@@ -298,8 +291,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       var y = window.pageYOffset + navH() + 70;
       var curIdx = 0;
       for(var i=0;i<anchors.length;i++){
-        var top = anchors[i].el.getBoundingClientRect().top + window.pageYOffset;
-        if(top <= y) curIdx = i;
+        if(railTops[i] <= y) curIdx = i;
       }
       /* at (or near) the bottom, force the last anchor active — short final
          sections can never reach the activation line on their own */
@@ -323,8 +315,8 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
       }
     }
     railUpdate();
-    window.addEventListener('scroll', railUpdate, {passive:true});
-    window.addEventListener('resize', railUpdate);
+    shOnScroll(railUpdate);
+    window.addEventListener('resize', function(){ railMeasure(); railUpdate(); });
 
     /* (cursor-magnify wave removed — icon hover + Projects flyout are CSS-driven) */
   }
