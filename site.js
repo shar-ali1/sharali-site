@@ -150,9 +150,11 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
   }
 
-  /* ---------- global parallax starfield (fixed, whole page) ---------- */
+  /* ---------- global parallax starfield (fixed, whole page) ----------
+     built AFTER first paint (load + idle) so injecting hundreds of spans
+     doesn't compete with LCP for main-thread time on mobile */
   var starRoot = root.querySelector('.sh-bg'), layers = [];
-  if(starRoot){
+  function shBuildStars(){
     var defs = [
       {strength:10,count:110,smin:0.7,smax:1.6,omin:0.30,omax:0.65,fmin:26,fmax:44},
       {strength:22,count:75,smin:1.1,smax:2.2,omin:0.48,omax:0.85,fmin:18,fmax:30},
@@ -182,7 +184,8 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
   var oldAur = root.querySelector('.sh-aurora');
   if(oldAur && oldAur.parentNode) oldAur.parentNode.removeChild(oldAur); /* legacy aurora canvas, if cached HTML still has one */
   var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 380, TRAIL_DPR = 1;
-  if(!reduce && starRoot){
+  function shBuildTrail(){
+    if(reduce || !starRoot) return;
     /* ribbon canvas sits ON TOP of the star layers */
     trailCv = document.createElement('canvas');
     trailCv.className = 'sh-trail';
@@ -250,7 +253,8 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
   }
 
   /* ---------- occasional shooting star (always on) ---------- */
-  if(starRoot){
+  function shStartMeteors(){
+    if(!starRoot) return;
     function meteor(){
       var sx=4+Math.random()*52, sy=-4+Math.random()*26, len=120+Math.random()*90,
           dx=280+Math.random()*260, dy=dx*0.42, ang=Math.atan2(dy,dx)*180/Math.PI;
@@ -266,6 +270,23 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
     (function loop(){ setTimeout(function(){ meteor(); loop(); }, 2600+Math.random()*2400); })();
   }
+
+  /* ---------- deferred backdrop boot ----------
+     stars / trail canvas / meteors are cosmetic — build them once the page
+     has painted and the main thread is idle, instead of during initial load */
+  function shBootBackdrop(){
+    if(!starRoot || shBootBackdrop.done) return;
+    shBootBackdrop.done = true;
+    shBuildStars();
+    shBuildTrail();
+    shStartMeteors();
+  }
+  function shScheduleBackdrop(){
+    if('requestIdleCallback' in window) requestIdleCallback(shBootBackdrop, {timeout:2500});
+    else setTimeout(shBootBackdrop, 400);
+  }
+  if(document.readyState === 'complete') shScheduleBackdrop();
+  else window.addEventListener('load', shScheduleBackdrop);
 
   /* ---------- side rail scroll-spy ---------- */
   var rail = document.getElementById('sh-rail');
