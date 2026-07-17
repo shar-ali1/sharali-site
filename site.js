@@ -15,7 +15,7 @@
 var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- rotating hero words ---------- */
-  var SH_WORDS = ['Security-Minded Builder','Aspiring Security Analyst','CS Student','Problem Solver','AI-Assisted Developer'];
+  var SH_WORDS = ['AI Engineer in Training','Agentic Systems Builder','Eval-Driven Developer','CS Student @ UIC','Problem Solver'];
   var wordEl = root.querySelector('.sh-word'), wi = 0;
   if(wordEl){
     setInterval(function(){
@@ -160,22 +160,59 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
   }
 
-  /* ---------- subtle cursor-following glow (page-wide) + gentle star parallax ---------- */
-  /* ambient starfield/glow always run (intentional decorative motion for this site) */
-  var cglow = root.querySelector('.sh-bg-glow');
-  var cx = window.innerWidth/2, cy = window.innerHeight/2;
+  /* ---------- teal cursor trail (page-wide) + gentle star parallax ---------- */
+  /* ambient starfield always runs; the trail is skipped under reduced motion */
+  var oldGlow = root.querySelector('.sh-bg-glow');
+  if(oldGlow && oldGlow.parentNode) oldGlow.parentNode.removeChild(oldGlow); /* legacy glow div, if the old HTML is still live */
+  var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 420, TRAIL_DPR = 1;
+  if(!reduce && starRoot){
+    trailCv = document.createElement('canvas');
+    trailCv.className = 'sh-trail';
+    trailCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
+    starRoot.appendChild(trailCv);
+    trailCtx = trailCv.getContext('2d');
+    var trailSize = function(){
+      TRAIL_DPR = Math.min(window.devicePixelRatio || 1, 2);
+      trailCv.width = Math.round(window.innerWidth * TRAIL_DPR);
+      trailCv.height = Math.round(window.innerHeight * TRAIL_DPR);
+    };
+    trailSize();
+    window.addEventListener('resize', trailSize);
+  }
   {
     var t = {px:0,py:0}, c = {px:0,py:0};
-    var gt = {x:cx, y:cy}, gc = {x:cx, y:cy};
     root.addEventListener('mousemove', function(e){
-      gt.x = e.clientX; gt.y = e.clientY;
       t.px = (e.clientX/window.innerWidth - .5)*2; t.py = (e.clientY/window.innerHeight - .5)*2;
+      if(trailCtx){
+        var last = trailPts[trailPts.length-1];
+        if(!last || Math.abs(e.clientX-last.x) + Math.abs(e.clientY-last.y) > 2){
+          trailPts.push({x:e.clientX, y:e.clientY, t:performance.now()});
+          if(trailPts.length > 48) trailPts.shift();
+        }
+      }
     }, {passive:true});
-    if(cglow) cglow.style.transform = 'translate('+gc.x+'px,'+gc.y+'px)';
     (function tick(){
-      /* glow eases toward the cursor (subtle lag, full follow) */
-      gc.x += (gt.x-gc.x)*.12; gc.y += (gt.y-gc.y)*.12;
-      if(cglow) cglow.style.transform = 'translate('+gc.x.toFixed(1)+'px,'+gc.y.toFixed(1)+'px)';
+      /* trail: short tapered teal line through recent cursor points; fades out at rest */
+      if(trailCtx){
+        var now = performance.now();
+        while(trailPts.length && now - trailPts[0].t > TRAIL_LIFE) trailPts.shift();
+        trailCtx.setTransform(TRAIL_DPR, 0, 0, TRAIL_DPR, 0, 0);
+        trailCtx.clearRect(0, 0, trailCv.width, trailCv.height);
+        if(trailPts.length > 1){
+          trailCtx.lineCap = 'round'; trailCtx.lineJoin = 'round';
+          trailCtx.shadowColor = 'rgba(79,209,197,.75)'; trailCtx.shadowBlur = 6;
+          for(var p=1; p<trailPts.length; p++){
+            var a = trailPts[p-1], b = trailPts[p];
+            var age = Math.min(1, (now - b.t)/TRAIL_LIFE);       /* 0 fresh -> 1 gone */
+            trailCtx.strokeStyle = 'rgba(79,209,197,' + (0.55*(1-age)).toFixed(3) + ')';
+            trailCtx.lineWidth = 1 + 2.2*(1-age);
+            trailCtx.beginPath();
+            trailCtx.moveTo(a.x, a.y); trailCtx.lineTo(b.x, b.y);
+            trailCtx.stroke();
+          }
+          trailCtx.shadowBlur = 0;
+        }
+      }
       /* stars: gentle mouse + scroll parallax (fall animation runs independently) */
       c.px += (t.px-c.px)*.06; c.py += (t.py-c.py)*.06;
       var sc = window.pageYOffset;
