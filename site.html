@@ -78,7 +78,8 @@
 <p class="p1">#shar-site .sh-mobile{display:none;}</p>
 <p class="p2"><br></p>
 <p class="p1">/* ---------- side scroll-spy rail — compact icons + Projects flyout ---------- */</p>
-<p class="p1">#shar-site .sh-rail{position:fixed; right:22px; top:50%; transform:translateY(-50%); z-index:45; display:flex; flex-direction:column; align-items:flex-end; gap:4px;}</p>
+<p class="p1">#shar-site .sh-rail{position:fixed; right:22px; top:50%; transform:translateY(-50%); z-index:45; display:flex; flex-direction:column; align-items:flex-end; gap:4px; opacity:0; pointer-events:none; transition:opacity .35s ease;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show{opacity:1; pointer-events:auto;}</p>
 <p class="p1">/* faint thread linking the icons */</p>
 <p class="p1">#shar-site .sh-rail::before{content:""; position:absolute; right:14px; top:18px; bottom:18px; width:1.5px; border-radius:2px; pointer-events:none;</p>
 <p class="p1"><span class="Apple-converted-space">  </span>background:linear-gradient(to bottom, transparent, rgba(158,195,255,.18) 12%, rgba(158,195,255,.18) 88%, transparent); box-shadow:0 0 8px rgba(120,170,255,.14); transition:background .35s, box-shadow .35s;}</p>
@@ -122,16 +123,15 @@
 <p class="p1">#shar-site .sh-fly-name{font-size:11px; line-height:1.2; text-align:center; color:#a7b8d0; transition:color .2s;}</p>
 <p class="p1">#shar-site .sh-rail-subitem:hover .sh-fly-name,#shar-site .sh-rail-subitem.sh-rail-on .sh-fly-name{color:#eaf2ff;}</p>
 <p class="p1">/* entrance: each item drops in one-by-one once JS boots */</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail{animation:shRailFade .5s ease both;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; a,#shar-site.sh-js-ready .sh-rail &gt; .sh-rail-projwrap{animation:shRailDotIn .55s cubic-bezier(.2,.7,.2,1) both;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(1){animation-delay:.22s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(2){animation-delay:.29s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(3){animation-delay:.36s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(4){animation-delay:.43s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(5){animation-delay:.50s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(6){animation-delay:.57s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(7){animation-delay:.64s;}</p>
-<p class="p1">#shar-site.sh-js-ready .sh-rail &gt; :nth-child(8){animation-delay:.71s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; a,#shar-site .sh-rail.sh-rail-show &gt; .sh-rail-projwrap{animation:shRailDotIn .55s cubic-bezier(.2,.7,.2,1) both;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(1){animation-delay:.22s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(2){animation-delay:.29s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(3){animation-delay:.36s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(4){animation-delay:.43s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(5){animation-delay:.50s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(6){animation-delay:.57s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(7){animation-delay:.64s;}</p>
+<p class="p1">#shar-site .sh-rail.sh-rail-show &gt; :nth-child(8){animation-delay:.71s;}</p>
 <p class="p2"><br></p>
 <p class="p1">/* ---------- shared section frame ---------- */</p>
 <p class="p1">#shar-site .sh-section{position:relative; padding:clamp(64px,9vw,118px) clamp(20px,6vw,40px); scroll-margin-top:70px;}</p>
@@ -382,7 +382,7 @@
 <p class="p1">}</p>
 <p class="p1">@media (prefers-reduced-motion:reduce){</p>
 <p class="p1"><span class="Apple-converted-space">  </span>#shar-site .sh-ail-card::before{animation:none!important;}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>#shar-site.sh-js-ready .sh-rail,#shar-site.sh-js-ready .sh-rail &gt; a{animation:none!important;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#shar-site .sh-rail.sh-rail-show,#shar-site .sh-rail.sh-rail-show &gt; a{animation:none!important;}</p>
 <p class="p1"><span class="Apple-converted-space">  </span>#shar-site .sh-rail-dot{animation:none!important;}</p>
 <p class="p1">}</p>
 <p class="p2"><br></p>

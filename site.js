@@ -140,9 +140,9 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
   var starRoot = root.querySelector('.sh-bg'), layers = [];
   if(starRoot){
     var defs = [
-      {strength:10,count:150,smin:0.7,smax:1.6,omin:0.30,omax:0.65,fmin:26,fmax:44},
-      {strength:22,count:102,smin:1.1,smax:2.2,omin:0.48,omax:0.85,fmin:18,fmax:30},
-      {strength:40,count:56,smin:1.7,smax:3.2,omin:0.68,omax:1.00,fmin:12,fmax:20}
+      {strength:10,count:220,smin:0.7,smax:1.6,omin:0.30,omax:0.65,fmin:26,fmax:44},
+      {strength:22,count:150,smin:1.1,smax:2.2,omin:0.48,omax:0.85,fmin:18,fmax:30},
+      {strength:40,count:82,smin:1.7,smax:3.2,omin:0.68,omax:1.00,fmin:12,fmax:20}
     ];
     for(var d=0; d<defs.length; d++){
       var L = defs[d], layer = document.createElement('div'); layer.className='sh-layer'; var html='';
@@ -160,24 +160,62 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }
   }
 
-  /* ---------- teal cursor trail (page-wide) + gentle star parallax ---------- */
-  /* ambient starfield always runs; the trail is skipped under reduced motion */
+  /* ---------- white cursor ribbon + aurora + gentle star parallax ---------- */
+  /* ambient starfield always runs; ribbon and aurora are skipped under reduced motion */
   var oldGlow = root.querySelector('.sh-bg-glow');
   if(oldGlow && oldGlow.parentNode) oldGlow.parentNode.removeChild(oldGlow); /* legacy glow div, if the old HTML is still live */
-  var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 420, TRAIL_DPR = 1;
+  var trailCv = null, trailCtx = null, trailPts = [], TRAIL_LIFE = 600, TRAIL_DPR = 1;
+  var aurCv = null, aurCtx = null;
+  var AUR_BANDS = [
+    {rgb:'79,209,197',  yb:0.16, th:150, amp:52, sp:0.000050, off:0.0, a:0.16},
+    {rgb:'79,141,255',  yb:0.30, th:180, amp:70, sp:0.000034, off:2.1, a:0.13},
+    {rgb:'150,120,230', yb:0.10, th:120, amp:44, sp:0.000064, off:4.4, a:0.10}
+  ];
   if(!reduce && starRoot){
+    /* aurora canvas sits BEHIND the star layers */
+    aurCv = document.createElement('canvas');
+    aurCv.className = 'sh-aurora';
+    aurCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:blur(26px);';
+    starRoot.insertBefore(aurCv, starRoot.firstChild);
+    aurCtx = aurCv.getContext('2d');
+    /* ribbon canvas sits ON TOP of the star layers */
     trailCv = document.createElement('canvas');
     trailCv.className = 'sh-trail';
     trailCv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
     starRoot.appendChild(trailCv);
     trailCtx = trailCv.getContext('2d');
-    var trailSize = function(){
+    var fxSize = function(){
       TRAIL_DPR = Math.min(window.devicePixelRatio || 1, 2);
       trailCv.width = Math.round(window.innerWidth * TRAIL_DPR);
       trailCv.height = Math.round(window.innerHeight * TRAIL_DPR);
+      aurCv.width = window.innerWidth;   /* blurred anyway — 1x is enough */
+      aurCv.height = window.innerHeight;
     };
-    trailSize();
-    window.addEventListener('resize', trailSize);
+    fxSize();
+    window.addEventListener('resize', fxSize);
+  }
+  function drawAurora(now){
+    var w = aurCv.width, h = aurCv.height;
+    aurCtx.clearRect(0, 0, w, h);
+    for(var b=0; b<AUR_BANDS.length; b++){
+      var B = AUR_BANDS[b], steps = 22, top = [], y0 = h*B.yb;
+      for(var i=0;i<=steps;i++){
+        var x = w*i/steps;
+        top.push(y0 + Math.sin(x*0.0045 + now*B.sp + B.off)*B.amp
+                    + Math.sin(x*0.011 - now*B.sp*1.6 + B.off)*B.amp*0.45);
+      }
+      var yMin = Math.min.apply(null, top);
+      var g = aurCtx.createLinearGradient(0, yMin, 0, yMin + B.th*1.7);
+      g.addColorStop(0, 'rgba('+B.rgb+','+B.a+')');
+      g.addColorStop(1, 'rgba('+B.rgb+',0)');
+      aurCtx.fillStyle = g;
+      aurCtx.beginPath();
+      aurCtx.moveTo(0, top[0]);
+      for(var j=1;j<=steps;j++) aurCtx.lineTo(w*j/steps, top[j]);
+      for(var k=steps;k>=0;k--) aurCtx.lineTo(w*k/steps, top[k] + B.th + Math.sin(w*k/steps*0.006 + now*B.sp*1.3)*B.amp*0.3);
+      aurCtx.closePath();
+      aurCtx.fill();
+    }
   }
   {
     var t = {px:0,py:0}, c = {px:0,py:0};
@@ -187,27 +225,30 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
         var last = trailPts[trailPts.length-1];
         if(!last || Math.abs(e.clientX-last.x) + Math.abs(e.clientY-last.y) > 2){
           trailPts.push({x:e.clientX, y:e.clientY, t:performance.now()});
-          if(trailPts.length > 48) trailPts.shift();
+          if(trailPts.length > 60) trailPts.shift();
         }
       }
     }, {passive:true});
     (function tick(){
-      /* trail: short tapered teal line through recent cursor points; fades out at rest */
+      var now = performance.now();
+      /* aurora: slow drifting ribbons behind the stars */
+      if(aurCtx) drawAurora(now);
+      /* ribbon: smooth white curve through recent cursor points; fades out at rest */
       if(trailCtx){
-        var now = performance.now();
         while(trailPts.length && now - trailPts[0].t > TRAIL_LIFE) trailPts.shift();
         trailCtx.setTransform(TRAIL_DPR, 0, 0, TRAIL_DPR, 0, 0);
         trailCtx.clearRect(0, 0, trailCv.width, trailCv.height);
-        if(trailPts.length > 1){
+        if(trailPts.length > 2){
           trailCtx.lineCap = 'round'; trailCtx.lineJoin = 'round';
-          trailCtx.shadowColor = 'rgba(79,209,197,.75)'; trailCtx.shadowBlur = 6;
-          for(var p=1; p<trailPts.length; p++){
-            var a = trailPts[p-1], b = trailPts[p];
-            var age = Math.min(1, (now - b.t)/TRAIL_LIFE);       /* 0 fresh -> 1 gone */
-            trailCtx.strokeStyle = 'rgba(79,209,197,' + (0.55*(1-age)).toFixed(3) + ')';
-            trailCtx.lineWidth = 1 + 2.2*(1-age);
+          trailCtx.shadowColor = 'rgba(255,255,255,.55)'; trailCtx.shadowBlur = 5;
+          for(var p=1; p<trailPts.length-1; p++){
+            var p0 = trailPts[p-1], p1 = trailPts[p], p2 = trailPts[p+1];
+            var f = 1 - Math.min(1, (now - p1.t)/TRAIL_LIFE);       /* 1 fresh -> 0 gone */
+            trailCtx.strokeStyle = 'rgba(255,255,255,' + (0.5*f).toFixed(3) + ')';
+            trailCtx.lineWidth = Math.max(0.3, 3.2*f);
             trailCtx.beginPath();
-            trailCtx.moveTo(a.x, a.y); trailCtx.lineTo(b.x, b.y);
+            trailCtx.moveTo((p0.x+p1.x)/2, (p0.y+p1.y)/2);
+            trailCtx.quadraticCurveTo(p1.x, p1.y, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
             trailCtx.stroke();
           }
           trailCtx.shadowBlur = 0;
@@ -238,7 +279,7 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
         +'filter:drop-shadow(0 0 6px rgba(200,222,250,.8));';
       m.appendChild(inner); m.addEventListener('animationend', function(){ m.remove(); }); starRoot.appendChild(m);
     }
-    (function loop(){ setTimeout(function(){ meteor(); loop(); }, 3500+Math.random()*3000); })();
+    (function loop(){ setTimeout(function(){ meteor(); loop(); }, 2600+Math.random()*2400); })();
   }
 
   /* ---------- side rail scroll-spy ---------- */
@@ -251,6 +292,9 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     }).filter(function(a){ return a.el; });
     var subWrap = document.getElementById('sh-rail-sub');
     function railUpdate(){
+      /* show the rail only once the top nav has scrolled out of view */
+      var navGone = nav ? nav.getBoundingClientRect().bottom < 0 : window.pageYOffset > 120;
+      rail.classList.toggle('sh-rail-show', navGone);
       var y = window.pageYOffset + navH() + 70;
       var curIdx = 0;
       for(var i=0;i<anchors.length;i++){
