@@ -1,6 +1,7 @@
 /* Shar Ali Portfolio effects — paste into WPCode as a JavaScript Snippet.
    Set insertion to Auto Insert → Site Wide Footer or Footer. */
 (function(){
+  try{performance.mark('sh:js-eval');}catch(e){}
   var shBootTries = 0;
   function bootSharPortfolio(){
     var root = document.getElementById('shar-site');
@@ -271,22 +272,34 @@ var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: re
     (function loop(){ setTimeout(function(){ meteor(); loop(); }, 2600+Math.random()*2400); })();
   }
 
-  /* ---------- deferred backdrop boot ----------
-     stars / trail canvas / meteors are cosmetic — build them once the page
-     has painted and the main thread is idle, instead of during initial load */
+  /* ---------- backdrop boot + boot-gate release ----------
+     stars and the trail canvas are built synchronously at init so the
+     backdrop's first frame and the content unveil land on the same paint:
+     sh-boot (set in the markup, failsafed by an inline 700ms script there)
+     comes off inside a rAF, so the content fade starts on the exact frame
+     the backdrop first paints. under reduced motion it comes off
+     immediately — the markup's CSS drops the fade there too. */
   function shBootBackdrop(){
     if(!starRoot || shBootBackdrop.done) return;
     shBootBackdrop.done = true;
     shBuildStars();
     shBuildTrail();
-    shStartMeteors();
+    try{performance.mark('sh:backdrop-built');}catch(e){}
   }
-  function shScheduleBackdrop(){
-    if('requestIdleCallback' in window) requestIdleCallback(shBootBackdrop, {timeout:2500});
-    else setTimeout(shBootBackdrop, 400);
+  function shReleaseBoot(){
+    try{performance.mark('sh:boot-reveal');}catch(e){}
+    root.classList.remove('sh-boot');
   }
-  if(document.readyState === 'complete') shScheduleBackdrop();
-  else window.addEventListener('load', shScheduleBackdrop);
+  shBootBackdrop();
+  if(reduce) shReleaseBoot();
+  else requestAnimationFrame(shReleaseBoot);
+  /* meteors stay deferred to idle — occasional, invisible at boot anyway */
+  function shScheduleMeteors(){
+    if('requestIdleCallback' in window) requestIdleCallback(function(){ shStartMeteors(); }, {timeout:2500});
+    else setTimeout(shStartMeteors, 400);
+  }
+  if(document.readyState === 'complete') shScheduleMeteors();
+  else window.addEventListener('load', shScheduleMeteors);
 
   /* ---------- side rail scroll-spy ---------- */
   var rail = document.getElementById('sh-rail');

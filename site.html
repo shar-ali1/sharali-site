@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="dns-prefetch" href="https://shar-ali1.github.io">
+<link rel="preconnect" href="https://shar-ali1.github.io">
+<link rel="preload" href="https://shar-ali1.github.io/sharali-site/site.js" as="script">
 <style>
 
 #shar-site{
@@ -30,6 +33,13 @@
 #shar-site img{max-width:100%;}
 #shar-site ::selection{background:rgba(79,141,255,.32);}
 
+/* ---------- boot gate: hold content (never the background layer) invisible
+   until site.js paints its first backdrop frame; the inline failsafe script
+   and noscript rule below guarantee content shows even if site.js never
+   arrives ---------- */
+#shar-site > :not(.sh-bg){transition:opacity 220ms ease;}
+#shar-site.sh-boot > :not(.sh-bg){opacity:0;}
+
 /* ---------- global fixed starfield (spans entire page on scroll) ---------- */
 #shar-site .sh-bg{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
 #shar-site .sh-bg .sh-layer{position:absolute; inset:-8% -8%; will-change:transform;}
@@ -49,7 +59,7 @@
 /* ---------- sticky nav ---------- */
 #shar-site .sh-nav{position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between;
   padding:38px clamp(10px,5vw,54px) 18px; background:rgba(10,20,38,.72); backdrop-filter:blur(14px);
-  border-bottom:1px solid transparent; transition:border-color .3s, background .3s;}
+  border-bottom:1px solid transparent; transition:border-color .3s, background .3s, opacity 220ms ease;}
 #shar-site .sh-nav.sh-scrolled{border-bottom-color:var(--line); background:rgba(9,17,33,.9);}
 #shar-site .sh-brand{font-family:'Playfair Display',serif; font-weight:800; font-size:19px; letter-spacing:.2px; color:var(--txt);}
 #shar-site .sh-brand b{color:var(--accent); font-weight:800;}
@@ -456,10 +466,15 @@ main {
 }
 @media (prefers-reduced-motion:reduce){
   #shar-site .sh-ps-card,#shar-site .sh-ps-modal,#shar-site .sh-ps-dialog{transition:none!important;}
+  /* boot gate releases instantly, with no fade */
+  #shar-site .sh-hero,#shar-site .sh-section{transition:none;}
+  #shar-site .sh-nav{transition:border-color .3s, background .3s;}
 }
 </style>
 
-<div id="shar-site">
+<div id="shar-site" class="sh-boot">
+<script>try{performance.mark('sh:gate-armed');setTimeout(function(){try{var r=document.getElementById('shar-site');if(r)r.classList.remove('sh-boot');}catch(e){}},700);}catch(e){}</script>
+<noscript><style>#shar-site.sh-boot > :not(.sh-bg){opacity:1;}</style></noscript>
 
   <!-- ============ GLOBAL STARFIELD (fixed, spans whole page) ============ -->
   <div class="sh-bg" id="sh-bg" aria-hidden="true">
